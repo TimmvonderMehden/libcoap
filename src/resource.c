@@ -6,15 +6,9 @@
  * README for terms of use.
  */
 
+#include "coap_internal.h"
+
 #include <stdio.h>
-#include "coap_config.h"
-#include "coap.h"
-#include "coap_debug.h"
-#include "mem.h"
-#include "net.h"
-#include "resource.h"
-#include "subscribe.h"
-#include "utlist.h"
 
 #if defined(WITH_LWIP)
 /* mem.h is only needed for the string free calls for
@@ -294,7 +288,8 @@ coap_print_wellknown(coap_context_t *context, unsigned char *buf, size_t *buflen
   return result;
 }
 
-static coap_str_const_t *null_path = coap_make_str_const("");
+static coap_str_const_t null_path_value = {0, (const uint8_t*)""};
+static coap_str_const_t *null_path = &null_path_value;
 
 coap_resource_t *
 coap_resource_init(coap_str_const_t *uri_path, int flags) {
@@ -794,7 +789,7 @@ coap_notify_observers(coap_context_t *context, coap_resource_t *r) {
       token.length = obs->token_length;
       token.s = obs->token;
 
-      response->tid = coap_new_message_id(obs->session);
+      obs->tid = response->tid = coap_new_message_id(obs->session);
       if ((r->flags & COAP_RESOURCE_FLAGS_NOTIFY_CON) == 0
           && obs->non_cnt < COAP_OBS_MAX_NON) {
         response->type = COAP_MESSAGE_NON;
@@ -903,17 +898,16 @@ coap_remove_failed_observers(coap_context_t *context,
         LL_DELETE(resource->subscribers, obs);
         obs->fail_cnt = 0;
 
-#ifndef NDEBUG
         if (LOG_DEBUG <= coap_get_log_level()) {
 #ifndef INET6_ADDRSTRLEN
 #define INET6_ADDRSTRLEN 40
 #endif
           unsigned char addr[INET6_ADDRSTRLEN+8];
 
-          if (coap_print_addr(&obs->session->remote_addr, addr, INET6_ADDRSTRLEN+8))
+          if (coap_print_addr(&obs->session->addr_info.remote,
+                              addr, INET6_ADDRSTRLEN+8))
             coap_log(LOG_DEBUG, "** removed observer %s\n", addr);
         }
-#endif
         coap_cancel_all_messages(context, obs->session,
                                  obs->token, obs->token_length);
         coap_session_release( obs->session );

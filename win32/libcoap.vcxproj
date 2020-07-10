@@ -38,15 +38,16 @@
     <ClCompile Include="..\src\address.c" />
     <ClCompile Include="..\src\async.c" />
     <ClCompile Include="..\src\block.c" />
+    <ClCompile Include="..\src\coap_debug.c" />
     <ClCompile Include="..\src\coap_event.c" />
     <ClCompile Include="..\src\coap_hashkey.c" />
+    <ClCompile Include="..\src\coap_gnutls.c" />
     <ClCompile Include="..\src\coap_io.c" />
     <ClCompile Include="..\src\coap_notls.c" />
     <ClCompile Include="..\src\coap_openssl.c" />
     <ClCompile Include="..\src\coap_session.c" />
     <ClCompile Include="..\src\coap_time.c" />
     <ClCompile Include="..\src\coap_tinydtls.c" />
-    <ClCompile Include="..\src\coap_debug.c" />
     <ClCompile Include="..\src\encode.c" />
     <ClCompile Include="..\src\mem.c" />
     <ClCompile Include="..\src\net.c" />
@@ -64,12 +65,18 @@
     <ClInclude Include="..\include\coap2\bits.h" />
     <ClInclude Include="..\include\coap2\block.h" />
     <ClInclude Include="..\include\coap2\coap.h" />
+    <ClInclude Include="..\include\coap2\coap_debug.h" />
     <ClInclude Include="..\include\coap2\coap_dtls.h" />
     <ClInclude Include="..\include\coap2\coap_event.h" />
+    <ClInclude Include="..\include\coap2\coap_forward_decls.h" />
+    <ClInclude Include="..\include\coap2\coap_hashkey.h" />
+    <ClInclude Include="..\include\coap2\coap_internal.h" />
     <ClInclude Include="..\include\coap2\coap_io.h" />
+    <ClInclude Include="..\include\coap2\coap_mutex.h" />
     <ClInclude Include="..\include\coap2\coap_session.h" />
+    <ClInclude Include="..\include\coap2\coap_session_internal.h" />
+    <ClInclude Include="..\include\coap2\coap_subscribe_internal.h" />
     <ClInclude Include="..\include\coap2\coap_time.h" />
-    <ClInclude Include="..\include\coap2\coap_debug.h" />
     <ClInclude Include="..\include\coap2\encode.h" />
     <ClInclude Include="..\include\coap2\libcoap.h" />
     <ClInclude Include="..\include\coap2\mem.h" />
@@ -145,58 +152,58 @@ TYPE %(FullPath) &gt;&gt; "$(IntDir)$(TargetName).def"</Command>
     <ProjectGuid>{96A98759-36B3-4246-A265-CAFCEEC0F2F2}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>libcoap</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug DLL|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>

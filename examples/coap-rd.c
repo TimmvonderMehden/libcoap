@@ -85,8 +85,13 @@ rd_delete(rd_t *rd) {
   }
 }
 
-/* temporary storage for dynamic resource representations */
 static int quit = 0;
+
+/* SIGINT handler: set quit to 1 for graceful termination */
+static void
+handle_sigint(int signum UNUSED_PARAM) {
+  quit = 1;
+}
 
 static void
 hnd_get_resource(coap_context_t  *ctx UNUSED_PARAM,
@@ -495,7 +500,7 @@ hnd_post_rd(coap_context_t  *ctx,
     }
   }
 
-  add_source_address(r, &session->remote_addr );
+  add_source_address(r, &session->addr_info.remote);
 
   {
     rd_t *rd;
@@ -611,70 +616,6 @@ get_context(const char *node, const char *port) {
   return ctx;
 }
 
-static int
-join(coap_context_t *ctx, char *group_name) {
-  struct ipv6_mreq mreq;
-  struct addrinfo   *reslocal = NULL, *resmulti = NULL, hints, *ainfo;
-  int result = -1;
-
-  /* we have to resolve the link-local interface to get the interface id */
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_INET6;
-  hints.ai_socktype = SOCK_DGRAM;
-
-  result = getaddrinfo("::", NULL, &hints, &reslocal);
-  if ( result != 0 ) {
-    fprintf( stderr, "join: cannot resolve link-local interface: %s\n", gai_strerror( result ) );
-    goto finish;
-  }
-
-  /* get the first suitable interface identifier */
-  for (ainfo = reslocal; ainfo != NULL; ainfo = ainfo->ai_next) {
-    if ( ainfo->ai_family == AF_INET6 ) {
-      mreq.ipv6mr_interface =
-              ((struct sockaddr_in6 *)ainfo->ai_addr)->sin6_scope_id;
-      break;
-    }
-  }
-
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_INET6;
-  hints.ai_socktype = SOCK_DGRAM;
-
-  /* resolve the multicast group address */
-  result = getaddrinfo(group_name, NULL, &hints, &resmulti);
-
-  if ( result != 0 ) {
-    fprintf( stderr, "join: cannot resolve multicast address: %s\n", gai_strerror( result ) );
-    goto finish;
-  }
-
-  for (ainfo = resmulti; ainfo != NULL; ainfo = ainfo->ai_next) {
-    if ( ainfo->ai_family == AF_INET6 ) {
-      mreq.ipv6mr_multiaddr =
-        ((struct sockaddr_in6 *)ainfo->ai_addr)->sin6_addr;
-      break;
-    }
-  }
-
-  if (ctx->endpoint) {
-    result = setsockopt(ctx->endpoint->sock.fd,
-                        IPPROTO_IPV6, IPV6_JOIN_GROUP,
-                        (char *)&mreq, sizeof(mreq) );
-    if ( result == COAP_SOCKET_ERROR ) {
-      fprintf( stderr, "join: setsockopt: %s\n", coap_socket_strerror() );
-    }
-  } else {
-    result = -1;
-  }
-
- finish:
-  freeaddrinfo(resmulti);
-  freeaddrinfo(reslocal);
-
-  return result;
-}
-
 int
 main(int argc, char **argv) {
   coap_context_t  *ctx;
@@ -684,6 +625,9 @@ main(int argc, char **argv) {
   char *group = NULL;
   int opt;
   coap_log_t log_level = LOG_WARNING;
+#ifndef _WIN32
+  struct sigaction sa;
+#endif
 
   while ((opt = getopt(argc, argv, "A:g:p:v:")) != -1) {
     switch (opt) {
@@ -716,9 +660,23 @@ main(int argc, char **argv) {
     return -1;
 
   if (group)
-    join(ctx, group);
+    coap_join_mcast_group(ctx, group);
 
   init_resources(ctx);
+
+#ifdef _WIN32
+  signal(SIGINT, handle_sigint);
+#else
+  memset (&sa, 0, sizeof(sa));
+  sigemptyset(&sa.sa_mask);
+  sa.sa_handler = handle_sigint;
+  sa.sa_flags = 0;
+  sigaction (SIGINT, &sa, NULL);
+  sigaction (SIGTERM, &sa, NULL);
+  /* So we do not exit on a SIGPIPE */
+  sa.sa_handler = SIG_IGN;
+  sigaction (SIGPIPE, &sa, NULL);
+#endif
 
   while ( !quit ) {
     result = coap_run_once( ctx, COAP_RESOURCE_CHECK_TIME * 1000 );

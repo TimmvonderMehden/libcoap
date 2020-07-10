@@ -98,7 +98,7 @@ OPTIONS - General
 
 *-v* num::
    The verbosity level to use (default 3, maximum is 9). Above 7, there is
-   increased verbosity in GnuTLS logging.
+   increased verbosity in GnuTLS and OpenSSL logging.
 
 *-A* type::
    Accepted media type. 'type' must be either a numeric value reflecting a
@@ -109,15 +109,16 @@ OPTIONS - General
    Break operation after waiting given seconds (default is 90).
 
 *-K* interval::
-   Send a ping after interval seconds of inactivity (TCP only).
-   If not specified, keep-alive is disabled (default).
+   Send a ping after interval seconds of inactivity.
+   If not specified (or 0), keep-alive is disabled (default).
 
 *-N* ::
    Send NON-confirmable message. If option *-N* is not specified, a
    confirmable message will be sent.
 
 *-O* num,text::
-   Add option 'num' with contents of 'text' to the request.
+   Add option 'num' with contents of 'text' to the request. If the text begins
+   with 0x, then the hex text is converted to binary data.
 
 *-P* addr[:port]::
    Address (and port) for proxy to use (automatically adds Proxy-Uri option

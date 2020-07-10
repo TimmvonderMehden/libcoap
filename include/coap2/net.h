@@ -10,7 +10,6 @@
 #ifndef COAP_NET_H_
 #define COAP_NET_H_
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #ifndef _WIN32
@@ -178,13 +177,6 @@ typedef struct coap_context_t {
                                    *   context, otherwise 0. */
 #endif /* WITH_LWIP */
 
-  /**
-   * The last message id that was used is stored in this field. The initial
-   * value is set by coap_new_context() and is usually a random value. A new
-   * message id can be created with coap_new_message_id().
-   */
-  uint16_t message_id;
-
   coap_response_handler_t response_handler;
   coap_nack_handler_t nack_handler;
   coap_ping_handler_t ping_handler;
@@ -217,6 +209,11 @@ typedef struct coap_context_t {
   unsigned int csm_timeout;           /**< Timeout for waiting for a CSM from the remote side. 0 means disabled. */
 
   void *app;                       /**< application-specific data */
+#ifdef COAP_EPOLL_SUPPORT
+  int epfd;                        /**< External FD for epoll */
+  int eptimerfd;                   /**< Internal FD for timeout */
+  coap_tick_t next_timeout;        /**< When the next timeout is to occur */
+#endif /* COAP_EPOLL_SUPPORT */
 } coap_context_t;
 
 /**
@@ -354,17 +351,31 @@ coap_context_set_pki_root_cas(coap_context_t *context,
  * Set the context keepalive timer for sessions.
  * A keepalive message will be sent after if a session has been inactive,
  * i.e. no packet sent or received, for the given number of seconds.
- * For reliable protocols, a PING message will be sent. If a PONG has not
- * been received before the next PING is due to be sent, the session will
- * considered as disconnected.
+ * For unreliable protocols, a CoAP Empty message will be sent. If a 
+ * CoAP RST is not received, the CoAP Empty messages will get resent based
+ * on the Confirmable retry parameters until there is a failure timeout,
+ * at which point the session will be considered as disconnected.
+ * For reliable protocols, a CoAP PING message will be sent. If a CoAP PONG
+ * has not been received before the next PING is due to be sent, the session
+ * will be considered as disconnected.
  *
  * @param context        The coap_context_t object.
- * @param seconds                 Number of seconds for the inactivity timer, or zero
+ * @param seconds        Number of seconds for the inactivity timer, or zero
  *                       to disable CoAP-level keepalive messages.
  *
  * @return 1 if successful, else 0
  */
 void coap_context_set_keepalive(coap_context_t *context, unsigned int seconds);
+
+/**
+ * Get the libcoap internal file descriptor for using in an application's
+ * select() or returned as an event in an application's epoll_wait() call.
+ *
+ * @param context        The coap_context_t object.
+ *
+ * @return The libcoap file descriptor or @c -1 if epoll is not available.
+ */
+int coap_context_get_coap_fd(coap_context_t *context);
 
 /**
  * Returns a new message id and updates @p session->tx_mid accordingly. The
@@ -556,16 +567,61 @@ coap_write(coap_context_t *ctx,
  */
 void coap_read(coap_context_t *ctx, coap_tick_t now);
 
+#define COAP_RUN_BLOCK    0
+#define COAP_RUN_NONBLOCK 1
+
 /**
  * The main message processing loop.
  *
  * @param ctx The CoAP context
- * @param timeout_ms Minimum number of milliseconds to wait for new messages before returning. If zero the call will block until at least one packet is sent or received.
+ * @param timeout_ms Minimum number of milliseconds to wait for new packets
+ *                   before returning. If COAP_RUN_BLOCK, the call will block
+ *                   until at least one new packet is received. If
+ *                   COAP_RUN_NONBLOCK, the function will return immediately
+ *                   following without waiting for any new input not already
+ *                   available.
  *
- * @return number of milliseconds spent or @c -1 if there was an error
+ * @return Number of milliseconds spent in coap_run_once, or @c -1 if there
+ *         was an error
  */
 
 int coap_run_once( coap_context_t *ctx, unsigned int timeout_ms );
+
+/**
+ * Any now timed out delayed packet is transmitted, along with any packets
+ * associated with requested observable response.
+ *
+ * In addition, it returns when the next expected I/O is expected to take place
+ * (e.g. a packet retransmit).
+ *
+ * Note: If epoll support is compiled into libcoap, coap_io_prepare_epoll() must
+ * be used instead of coap_write().
+ *
+ * Internal function.
+ *
+ * @param ctx The CoAP context
+ * @param now Current time.
+ *
+ * @return timeout Maxmimum number of milliseconds that can be used by a
+ *                 epoll_wait() to wait for network events or 0 if wait should be
+ *                 forever.
+ */
+unsigned int
+coap_io_prepare_epoll(coap_context_t *ctx, coap_tick_t now);
+
+struct epoll_event;
+/**
+ * Process all the epoll events
+ *
+ * Internal function
+ *
+ * @param ctx    The current CoAP context.
+ * @param events The list of events returned from an epoll_wait() call.
+ * @param nevents The number of events.
+ *
+ */
+void coap_io_do_events(coap_context_t *ctx, struct epoll_event* events,
+                      size_t nevents);
 
 /**
  * Parses and interprets a CoAP datagram with context @p ctx. This function
@@ -738,5 +794,16 @@ coap_pdu_t *coap_wellknown_response(coap_context_t *context,
  *           (1 + ('ack_random_factor' - 1) * r)
  */
 unsigned int coap_calc_timeout(coap_session_t *session, unsigned char r);
+
+/**
+ * Function interface for joining a multicast group for listening
+ *
+ * @param ctx   The current context
+ * @param groupname The name of the group that is to be joined for listening
+ *
+ * @return       0 on success, -1 on error
+ */
+int
+coap_join_mcast_group(coap_context_t *ctx, const char *groupname);
 
 #endif /* COAP_NET_H_ */

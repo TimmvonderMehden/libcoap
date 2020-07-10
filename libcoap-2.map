@@ -11,6 +11,7 @@ global:
   coap_add_optlist_pdu;
   coap_add_resource;
   coap_address_equals;
+  coap_address_init;
   coap_add_token;
   coap_adjust_basetime;
   coap_calc_timeout;
@@ -23,6 +24,7 @@ global:
   coap_clear_event_handler;
   coap_clock_init;
   coap_clone_uri;
+  coap_context_get_coap_fd;
   coap_context_set_keepalive;
   coap_context_set_pki;
   coap_context_set_pki_root_cas;
@@ -30,6 +32,7 @@ global:
   coap_debug_send_packet;
   coap_debug_set_packet_loss;
   coap_decode_var_bytes;
+  coap_decode_var_bytes8;
   coap_delete_all;
   coap_delete_all_resources;
   coap_delete_attr;
@@ -46,6 +49,7 @@ global:
   coap_dtls_is_supported;
   coap_dtls_set_log_level;
   coap_encode_var_safe;
+  coap_encode_var_safe8;
   coap_endpoint_get_session;
   coap_endpoint_set_default_mtu;
   coap_endpoint_str;
@@ -73,8 +77,11 @@ global:
   coap_hash_impl;
   coap_insert_node;
   coap_insert_optlist;
+  coap_io_prepare_epoll;
   coap_is_mcast;
+  coap_join_mcast_group;
   coap_log_impl;
+  coap_make_str_const;
   coap_malloc_endpoint;
   coap_malloc_type;
   coap_memory_init;
@@ -111,7 +118,6 @@ global:
   coap_package_name;
   coap_package_version;
   coap_packet_get_memmapped;
-  coap_packet_set_addr;
   coap_pdu_clear;
   coap_pdu_encode_header;
   coap_pdu_init;
@@ -179,7 +185,6 @@ global:
   coap_split_uri;
   coap_startup;
   coap_string_tls_version;
-  coap_subscription_init;
   coap_ticks;
   coap_ticks_from_rt_us;
   coap_ticks_to_rt;

@@ -7,11 +7,9 @@
 * of use.
 */
 
-#include "coap_config.h"
+#include "coap_internal.h"
 
 #if !defined(HAVE_LIBTINYDTLS) && !defined(HAVE_OPENSSL) && !defined(HAVE_LIBGNUTLS)
-
-#include "net.h"
 
 #ifdef __GNUC__
 #define UNUSED __attribute__((unused))
@@ -121,7 +119,8 @@ coap_tick_t coap_dtls_get_context_timeout(void *dtls_context UNUSED) {
   return 0;
 }
 
-coap_tick_t coap_dtls_get_timeout(coap_session_t *session UNUSED) {
+coap_tick_t
+coap_dtls_get_timeout(coap_session_t *session UNUSED, coap_tick_t now UNUSED) {
   return 0;
 }
 

@@ -6,22 +6,15 @@
  * README for terms of use.
  */
 
-#include "coap_config.h"
+#include "coap_internal.h"
 
 #include <stdio.h>
-
-#include "libcoap.h"
-#include "coap_debug.h"
-#include "mem.h"
-#include "str.h"
 
 coap_string_t *coap_new_string(size_t size) {
   coap_string_t *s =
             (coap_string_t *)coap_malloc_type(COAP_STRING, sizeof(coap_string_t) + size + 1);
   if ( !s ) {
-#ifndef NDEBUG
-    coap_log(LOG_CRIT, "coap_new_string: malloc\n");
-#endif
+    coap_log(LOG_CRIT, "coap_new_string: malloc: failed\n");
     return NULL;
   }
 
@@ -46,5 +39,15 @@ coap_str_const_t *coap_new_str_const(const uint8_t *data, size_t size) {
 
 void coap_delete_str_const(coap_str_const_t *s) {
   coap_free_type(COAP_STRING, s);
+}
+
+coap_str_const_t *coap_make_str_const(const char *string)
+{
+  static int ofs = 0;
+  static coap_str_const_t var[COAP_MAX_STR_CONST_FUNC];
+  if (++ofs == COAP_MAX_STR_CONST_FUNC) ofs = 0;
+  var[ofs].length = strlen(string);
+  var[ofs].s = (const uint8_t *)string;
+  return &var[ofs];
 }
 

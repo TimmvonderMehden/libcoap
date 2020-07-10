@@ -1,11 +1,15 @@
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#ifndef COAP_CONFIG_H_
+#define COAP_CONFIG_H_
 
 #include <lwip/opt.h>
 #include <lwip/debug.h>
 #include <lwip/def.h> /* provide ntohs, htons */
 
 #define WITH_LWIP 1
+
+#ifndef COAP_CONSTRAINED_STACK
+#define COAP_CONSTRAINED_STACK 1
+#endif
 
 #define PACKAGE_NAME "libcoap-lwip"
 #define PACKAGE_VERSION "?"
@@ -20,4 +24,4 @@
 
 #define HAVE_LIMITS_H
 
-#endif /* _CONFIG_H_ */
+#endif /* COAP_CONFIG_H_ */

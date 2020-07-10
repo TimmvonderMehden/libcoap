@@ -7,14 +7,9 @@
  * of use.
  */
 
-#include "coap_config.h"
+#include "coap_internal.h"
 
 #ifdef HAVE_LIBTINYDTLS
-
-#include "net.h"
-#include "address.h"
-#include "coap_debug.h"
-#include "mem.h"
 
 /* We want TinyDTLS versions of these, not libcoap versions */
 #undef PACKAGE_BUGREPORT
@@ -277,7 +272,7 @@ coap_dtls_new_session(coap_session_t *session) {
     /* create tinydtls session object from remote address and local
     * endpoint handle */
     dtls_session_init(dtls_session);
-    put_session_addr(&session->remote_addr, dtls_session);
+    put_session_addr(&session->addr_info.remote, dtls_session);
     dtls_session->ifindex = session->ifindex;
     coap_log(LOG_DEBUG, "***new session %p\n", (void *)dtls_session);
   }
@@ -326,8 +321,11 @@ coap_dtls_session_update_mtu(coap_session_t *session) {
 
 void
 coap_dtls_free_session(coap_session_t *coap_session) {
-  struct dtls_context_t *ctx = (struct dtls_context_t *)coap_session->context->dtls_context;
-  if (coap_session->tls) {
+  struct dtls_context_t *ctx;
+  if (coap_session->context == NULL)
+    return;
+  ctx = (struct dtls_context_t *)coap_session->context->dtls_context;
+  if (coap_session->tls && ctx) {
     dtls_peer_t *peer = dtls_get_peer(ctx, (session_t *)coap_session->tls);
     if ( peer )
       dtls_reset_peer(ctx, peer);
@@ -336,6 +334,7 @@ coap_dtls_free_session(coap_session_t *coap_session) {
     coap_log(LOG_DEBUG, "***removed session %p\n", coap_session->tls);
     coap_free_type(COAP_DTLS_SESSION, coap_session->tls);
     coap_session->tls = NULL;
+    coap_handle_event(coap_session->context, COAP_EVENT_DTLS_CLOSED, coap_session);
   }
 }
 
@@ -359,10 +358,12 @@ coap_dtls_send(coap_session_t *session,
     coap_log(LOG_WARNING, "coap_dtls_send: cannot send PDU\n");
 
   if (coap_event_dtls >= 0) {
-    coap_handle_event(session->context, coap_event_dtls, session);
+    /* COAP_EVENT_DTLS_CLOSED event reported in coap_session_disconnected() */
+    if (coap_event_dtls != COAP_EVENT_DTLS_CLOSED)
+      coap_handle_event(session->context, coap_event_dtls, session);
     if (coap_event_dtls == COAP_EVENT_DTLS_CONNECTED)
       coap_session_connected(session);
-    else if (coap_event_dtls == DTLS_ALERT_CLOSE_NOTIFY || coap_event_dtls == COAP_EVENT_DTLS_ERROR)
+    else if (coap_event_dtls == COAP_EVENT_DTLS_CLOSED || coap_event_dtls == COAP_EVENT_DTLS_ERROR)
       coap_session_disconnected(session, COAP_NACK_TLS_FAILED);
   }
 
@@ -381,8 +382,9 @@ coap_tick_t coap_dtls_get_context_timeout(void *dtls_context) {
   return 0;
 }
 
-coap_tick_t coap_dtls_get_timeout(coap_session_t *session) {
+coap_tick_t coap_dtls_get_timeout(coap_session_t *session, coap_tick_t now) {
   (void)session;
+  (void)now;
   return 0;
 }
 
@@ -412,10 +414,12 @@ coap_dtls_receive(coap_session_t *session,
   }
 
   if (coap_event_dtls >= 0) {
-    coap_handle_event(session->context, coap_event_dtls, session);
+    /* COAP_EVENT_DTLS_CLOSED event reported in coap_session_disconnected() */
+    if (coap_event_dtls != COAP_EVENT_DTLS_CLOSED)
+      coap_handle_event(session->context, coap_event_dtls, session);
     if (coap_event_dtls == COAP_EVENT_DTLS_CONNECTED)
       coap_session_connected(session);
-    else if (coap_event_dtls == DTLS_ALERT_CLOSE_NOTIFY || coap_event_dtls == COAP_EVENT_DTLS_ERROR)
+    else if (coap_event_dtls == COAP_EVENT_DTLS_CLOSED || coap_event_dtls == COAP_EVENT_DTLS_ERROR)
       coap_session_disconnected(session, COAP_NACK_TLS_FAILED);
   }
 
@@ -433,7 +437,7 @@ coap_dtls_hello(coap_session_t *session,
   uint8_t *data_rw;
 
   dtls_session_init(&dtls_session);
-  put_session_addr(&session->remote_addr, &dtls_session);
+  put_session_addr(&session->addr_info.remote, &dtls_session);
   dtls_session.ifindex = session->ifindex;
   /* Need to do this to not get a compiler warning about const parameters */
   memcpy (&data_rw, &data, sizeof(data_rw));

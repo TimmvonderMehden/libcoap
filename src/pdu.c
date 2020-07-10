@@ -6,11 +6,7 @@
  * README for terms of use.
  */
 
-#include "coap_config.h"
-
-#if defined(HAVE_ASSERT_H) && !defined(assert)
-# include <assert.h>
-#endif
+#include "coap_internal.h"
 
 #if defined(HAVE_LIMITS_H)
 #include <limits.h>
@@ -25,14 +21,6 @@
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
 #endif
-
-#include "libcoap.h"
-#include "coap_debug.h"
-#include "pdu.h"
-#include "option.h"
-#include "encode.h"
-#include "mem.h"
-#include "coap_session.h"
 
 #ifndef min
 #define min(a,b) ((a) < (b) ? (a) : (b))
@@ -130,10 +118,8 @@ coap_pdu_init(uint8_t type, uint8_t code, uint16_t tid, size_t size) {
 coap_pdu_t *
 coap_new_pdu(const struct coap_session_t *session) {
   coap_pdu_t *pdu = coap_pdu_init(0, 0, 0, coap_session_max_pdu_size(session));
-#ifndef NDEBUG
   if (!pdu)
     coap_log(LOG_CRIT, "coap_new_pdu: cannot allocate memory for new PDU\n");
-#endif
   return pdu;
 }
 

@@ -9,7 +9,7 @@
 # defined later.
 m4_define([libcoap_major_version], [4])
 m4_define([libcoap_minor_version], [2])
-m4_define([libcoap_micro_version], [0])
+m4_define([libcoap_micro_version], [1])
 
 # define an appending release state if needed, for example for pre-releases
 # like 'alpha' or 'rc1', for a full release keep the value empty!
@@ -22,6 +22,8 @@ AC_INIT([libcoap], [libcoap_version], [libcoap-developers@lists.sourceforge.net]
 AC_PREREQ([2.64])
 AM_INIT_AUTOMAKE([1.10 -Wall no-define no-dist-gzip dist-bzip2])
 PKG_PROG_PKG_CONFIG([0.20])
+AM_SILENT_RULES([yes])
+AC_HEADER_ASSERT
 
 # Generate one configuration header file for building the library itself with
 # an auto generated template. We need later a second one (include/libcoap.h)
@@ -37,8 +39,7 @@ AM_PROG_AR
 
 AC_C_BIGENDIAN
 
-# enable the automatically build of shared and static libraries, the unit
-# tests needs the static library
+# enable the automatically build of shared and static libraries
 LT_INIT([shared static])
 
 # Setting the libtool versioning
@@ -56,7 +57,7 @@ LT_INIT([shared static])
 #
 # How to work with the libtool versioning?
 #
-# Follow the followings steps from top to bottom. This means always start at point 1
+# Follow the following steps from top to bottom. This means always start at point 1
 # if you plan to make a release and change the values.
 # Every new library starts with a version 'current'  (short 'c') = 0
 #                                         'revision' (short 'r') = 0
@@ -88,7 +89,7 @@ LT_INIT([shared static])
 #
 # 3. Interfaces were added but none removed or changed
 #    If any interfaces have been added since the last public release and non of the
-#    existing interfaces were removed and existing interfaces have not changed internally
+#    existing interfaces were removed and existing interfaces have not changed internal
 #    functionality then the new library is backward compatible. Existing binaries can
 #    use the new library the same than as the existing old library without loosing
 #    existing functionality or breakage.
@@ -104,9 +105,9 @@ LT_INIT([shared static])
 #
 #  --> Set 'LT_LIBCOAP_AGE' to 0.
 
-LT_LIBCOAP_CURRENT=1
-LT_LIBCOAP_REVISION=0
-LT_LIBCOAP_AGE=1
+LT_LIBCOAP_CURRENT=2
+LT_LIBCOAP_REVISION=1
+LT_LIBCOAP_AGE=0
 LIBCOAP_SO_VERSION=$LT_LIBCOAP_CURRENT.$LT_LIBCOAP_REVISION.$LT_LIBCOAP_AGE
 
 # Announce the libtool version
@@ -394,10 +395,6 @@ if test "x$build_dtls" = "xyes"; then
 
     # The user wants to use explicit OpenSSL if '--with-tinydtls was set'.
     if test "x$with_tinydtls" = "xyes" ; then
-        if test "x$enable_shared" = "xyes"; then
-            AC_MSG_ERROR([==> You want to build libcoap with DTLS support by tinyDTLS but have enabled shared libraries.
-                      Please pass '--disable-shared' to configure or select a different DTLS library.])
-        fi
         if test -d "$srcdir/ext/tinydtls"; then
            AC_CONFIG_SUBDIRS([ext/tinydtls])
            have_tinydtls="yes"
@@ -446,9 +443,15 @@ if test "x$build_dtls" = "xyes"; then
         AC_DEFINE(HAVE_OPENSSL, [1], [Define if the system has libssl1.1])
     fi
     if test "x$with_tinydtls" = "xyes"; then
-       DTLS_CFLAGS="-I \$(top_srcdir)/ext/tinydtls"
-       DTLS_LIBS="-L\$(top_srcdir)/ext/tinydtls -ltinydtls"
-       AC_DEFINE(HAVE_LIBTINYDTLS, [1], [Define if the system has libtinydtls])
+        DTLS_CFLAGS="-I \$(top_srcdir)/ext/tinydtls"
+        if test "x$enable_shared" = "xyes"; then
+            DTLS_LIBS="-L\$(top_builddir)/ext/tinydtls -ltinydtls"
+        else
+            # Needed as TinyDTLS compiling does not recognize --disable-shared
+            # and still builds libtinydtls.so which gets linked in otherwise
+            DTLS_LIBS="-L\$(top_builddir)/ext/tinydtls -l:libtinydtls.a"
+        fi
+        AC_DEFINE(HAVE_LIBTINYDTLS, [1], [Define if the system has libtinydtls])
     fi
     AC_SUBST(DTLS_CFLAGS)
     AC_SUBST(DTLS_LIBS)
@@ -473,6 +476,7 @@ fi
 
 AC_SUBST(LIBCOAP_NAME_SUFFIX)
 AC_SUBST(LIBCOAP_DTLS_LIB_EXTENSION_NAME)
+AC_SUBST([DOLLAR_SIGN],[$])
 
 # configure options
 # __tests__
@@ -564,8 +568,41 @@ fi
 
 # Checks for header files.
 AC_CHECK_HEADERS([assert.h arpa/inet.h limits.h netdb.h netinet/in.h \
+                  pthread.h \
                   stdlib.h string.h strings.h sys/socket.h sys/time.h \
                   time.h unistd.h sys/unistd.h syslog.h sys/ioctl.h])
+
+# For epoll, need two headers (sys/epoll.h sys/timerfd.h), but set up one #define
+AC_CHECK_HEADER([sys/epoll.h])
+AC_CHECK_HEADER([sys/timerfd.h])
+if test "x$ac_cv_header_sys_epoll_h" = "xyes" -a "x$ac_cv_header_sys_timerfd_h" = "xyes"; then
+    have_epoll="yes"
+    AC_ARG_WITH([epoll],
+            [AS_HELP_STRING([--with-epoll],
+                            [Use epoll for I/O handling [if O/S supports it]])],
+            [with_epoll="$withval"],
+            [with_epoll="yes"])
+else
+    have_epoll="no"
+    if test "x$with_epoll" = "xyes"; then
+        AC_MSG_WARN([==> Underlying O/S does not support epoll - --with-epoll ignored.])
+        with_epoll="no"
+    fi
+fi
+
+if test "x$with_epoll" = "xyes"; then
+    AC_DEFINE(COAP_EPOLL_SUPPORT, 1, [Define if the system has epoll support])
+fi
+
+AC_ARG_ENABLE([small-stack],
+        [AS_HELP_STRING([--enable-small-stack],
+                        [Use small-stack if the available stack space is restricted [default=no]])],
+        [enable_small_stack="$enableval"],
+        [enable_small_stack="no"])
+
+if test "x$enable_small_stack" = "xyes"; then
+    AC_DEFINE(COAP_CONSTRAINED_STACK, 1, [Define if the system has small stack size])
+fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
@@ -573,7 +610,7 @@ AC_TYPE_SSIZE_T
 
 # Checks for library functions.
 AC_CHECK_FUNCS([memset select socket strcasecmp strrchr getaddrinfo \
-                strnlen malloc])
+                strnlen malloc pthread_mutex_lock])
 
 # Check if -lsocket -lnsl is required (specifically Solaris)
 AC_SEARCH_LIBS([socket], [socket])
@@ -581,6 +618,11 @@ AC_SEARCH_LIBS([inet_ntop], [nsl])
 
 # Check if clock_gettime() requires librt, when available
 AC_SEARCH_LIBS([clock_gettime], [rt])
+
+#check for struct cmsghdr
+AC_CHECK_TYPES([struct cmsghdr],,,[
+AC_INCLUDES_DEFAULT
+#include <sys/socket.h>])
 
 AC_MSG_CHECKING([operating system])
 
@@ -655,8 +697,10 @@ man/coap_attribute.txt
 man/coap_context.txt
 man/coap_encryption.txt
 man/coap_handler.txt
-man/coap_observe.txt
+man/coap_io.txt
+man/coap_keepalive.txt
 man/coap_logging.txt
+man/coap_observe.txt
 man/coap_pdu_setup.txt
 man/coap_recovery.txt
 man/coap_resource.txt
@@ -701,6 +745,10 @@ fi
 if test "x$build_dtls" != "xyes"; then
     AC_MSG_RESULT([      build DTLS support      : "no"])
 fi
+if test "x$have_epoll" = "xyes"; then
+    AC_MSG_RESULT([      build using epoll       : "$with_epoll"])
+fi
+AC_MSG_RESULT([      enable small stack size : "$enable_small_stack"])
 if test "x$build_doxygen" = "xyes"; then
     AC_MSG_RESULT([      build doxygen pages     : "yes"])
     AC_MSG_RESULT([          --> Doxygen around  : "yes" ($DOXYGEN $doxygen_version)])

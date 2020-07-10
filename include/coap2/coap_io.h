@@ -10,7 +10,6 @@
 #ifndef COAP_IO_H_
 #define COAP_IO_H_
 
-#include <assert.h>
 #include <sys/types.h>
 
 #include "address.h"
@@ -18,6 +17,15 @@
 #ifndef COAP_RXBUFFER_SIZE
 #define COAP_RXBUFFER_SIZE 1472
 #endif /* COAP_RXBUFFER_SIZE */
+
+/*
+ * It may may make sense to define this larger on busy systems
+ * (lots of sessions, large number of which are active), by using
+ * -DCOAP_MAX_EPOLL_EVENTS=nn at compile time.
+ */
+#ifndef COAP_MAX_EPOLL_EVENTS
+#define COAP_MAX_EPOLL_EVENTS 10
+#endif /* COAP_MAX_EPOLL_EVENTS */
 
 #ifdef _WIN32
 typedef SOCKET coap_fd_t;
@@ -33,9 +41,15 @@ typedef int coap_fd_t;
 
 struct coap_packet_t;
 struct coap_session_t;
+struct coap_context_t;
 struct coap_pdu_t;
 
 typedef uint16_t coap_socket_flags_t;
+
+typedef struct coap_addr_tuple_t {
+  coap_address_t remote;       /**< remote address and port */
+  coap_address_t local;        /**< local address and port */
+} coap_addr_tuple_t;
 
 typedef struct coap_socket_t {
 #if defined(WITH_LWIP)
@@ -46,6 +60,14 @@ typedef struct coap_socket_t {
   coap_fd_t fd;
 #endif /* WITH_LWIP */
   coap_socket_flags_t flags;
+  struct coap_session_t *session; /* Used by the epoll logic for an active session.
+                                     Note: It must mot be wrapped with COAP_EPOLL_SUPPORT as
+                                     coap_socket_t is seen in applications embedded in
+                                     coap_session_t etc. */
+  struct coap_endpoint_t *endpoint; /* Used by the epoll logic for a listening endpoint.
+                                       Note: It must mot be wrapped with COAP_EPOLL_SUPPORT as
+                                       coap_socket_t is seen in applications embedded in
+                                       coap_session_t etc. */
 } coap_socket_t;
 
 /**
@@ -117,6 +139,9 @@ coap_socket_write(coap_socket_t *sock, const uint8_t *data, size_t data_len);
 ssize_t
 coap_socket_read(coap_socket_t *sock, uint8_t *data, size_t data_len);
 
+void
+coap_epoll_ctl_mod(coap_socket_t *sock, uint32_t events, const char *func);
+
 #ifdef WITH_LWIP
 ssize_t
 coap_socket_send_pdu( coap_socket_t *sock, struct coap_session_t *session,
@@ -164,9 +189,6 @@ void coap_packet_get_memmapped(struct coap_packet_t *packet,
                                unsigned char **address,
                                size_t *length);
 
-void coap_packet_set_addr( struct coap_packet_t *packet, const coap_address_t *src,
-                           const coap_address_t *dst );
-
 #ifdef WITH_LWIP
 /**
  * Get the pbuf of a packet. The caller takes over responsibility for freeing
@@ -187,15 +209,13 @@ struct pbuf *coap_packet_extract_pbuf(struct coap_packet_t *packet);
 struct coap_packet_t {
   struct pbuf *pbuf;
   const struct coap_endpoint_t *local_interface;
-  coap_address_t src;              /**< the packet's source address */
-  coap_address_t dst;              /**< the packet's destination address */
+  coap_addr_tuple_t addr_info; /**< local and remote addresses */
   int ifindex;                /**< the interface index */
 //  uint16_t srcport;
 };
 #else
 struct coap_packet_t {
-  coap_address_t src;              /**< the packet's source address */
-  coap_address_t dst;              /**< the packet's destination address */
+  coap_addr_tuple_t addr_info; /**< local and remote addresses */
   int ifindex;                /**< the interface index */
   size_t length;              /**< length of payload */
   unsigned char payload[COAP_RXBUFFER_SIZE]; /**< payload */
@@ -207,7 +227,8 @@ typedef enum {
   COAP_NACK_TOO_MANY_RETRIES,
   COAP_NACK_NOT_DELIVERABLE,
   COAP_NACK_RST,
-  COAP_NACK_TLS_FAILED
+  COAP_NACK_TLS_FAILED,
+  COAP_NACK_ICMP_ISSUE
 } coap_nack_reason_t;
 
 #endif /* COAP_IO_H_ */

@@ -54,6 +54,9 @@ static unsigned int ping_seconds = 0;
 /* reading is done when this flag is set */
 static int ready = 0;
 
+/* processing a block response when this flag is set */
+static int doing_getting_block = 0;
+
 static coap_string_t output_file = { 0, NULL };   /* output file name */
 static FILE *file = NULL;               /* output file stream */
 
@@ -165,8 +168,15 @@ coap_new_request(coap_context_t *ctx,
   if (length) {
     if ((flags & FLAGS_BLOCK) == 0)
       coap_add_data(pdu, length, data);
-    else
+    else {
+      unsigned char buf[4];
+      coap_add_option(pdu,
+                      COAP_OPTION_SIZE1,
+                      coap_encode_var_safe(buf, sizeof(buf), length),
+                      buf);
+
       coap_add_block(pdu, length, data, block.num, block.szx);
+    }
   }
 
   return pdu;
@@ -325,6 +335,27 @@ event_handler(coap_context_t *ctx UNUSED_PARAM,
 }
 
 static void
+nack_handler(coap_context_t *context UNUSED_PARAM,
+             coap_session_t *session UNUSED_PARAM,
+             coap_pdu_t *sent UNUSED_PARAM,
+             coap_nack_reason_t reason,
+             const coap_tid_t id UNUSED_PARAM) {
+
+  switch(reason) {
+  case COAP_NACK_TOO_MANY_RETRIES:
+  case COAP_NACK_NOT_DELIVERABLE:
+  case COAP_NACK_RST:
+  case COAP_NACK_TLS_FAILED:
+    quit = 1;
+    break;
+  case COAP_NACK_ICMP_ISSUE:
+  default:
+    break;
+  }
+  return;
+}
+
+static void
 message_handler(struct coap_context_t *ctx,
                 coap_session_t *session,
                 coap_pdu_t *sent,
@@ -340,12 +371,10 @@ message_handler(struct coap_context_t *ctx,
   unsigned char *databuf;
   coap_tid_t tid;
 
-#ifndef NDEBUG
   coap_log(LOG_DEBUG, "** process incoming %d.%02d response:\n",
            (received->code >> 5), received->code & 0x1F);
   if (coap_get_log_level() < LOG_DEBUG)
     coap_show_pdu(LOG_INFO, received);
-#endif
 
   /* check if this is a response to our original request */
   if (!check_token(received)) {
@@ -430,11 +459,14 @@ message_handler(struct coap_context_t *ctx,
           } else {
             wait_ms = wait_seconds * 1000;
             wait_ms_reset = 1;
+            doing_getting_block = 1;
           }
 
           return;
         }
       }
+      /* Failure of some sort */
+      doing_getting_block = 0;
       return;
     } else { /* no Block2 option */
       block_opt = coap_check_option(received, COAP_OPTION_BLOCK1, &opt_iter);
@@ -463,11 +495,6 @@ message_handler(struct coap_context_t *ctx,
           }
         }
 
-        if (payload.length <= (block.num+1) * (1 << (block.szx + 4))) {
-          coap_log(LOG_DEBUG, "upload ready\n");
-          ready = 1;
-          return;
-        }
         if (last_block1_tid == received->tid) {
           /*
            * Duplicate BLOCK1 ACK
@@ -482,7 +509,15 @@ message_handler(struct coap_context_t *ctx,
         }
         last_block1_tid = received->tid;
 
-        /* create pdu with request for next block */
+        if (payload.length <= (block.num+1) * (1 << (block.szx + 4))) {
+          coap_log(LOG_DEBUG, "upload ready\n");
+          if (coap_get_data(received, &len, &databuf))
+            append_to_output(databuf, len);
+          ready = 1;
+          return;
+        }
+
+       /* create pdu with request for next block */
         pdu = coap_new_request(ctx, session, method, NULL, NULL, 0); /* first, create bare PDU w/o any option  */
         if (pdu) {
 
@@ -512,6 +547,11 @@ message_handler(struct coap_context_t *ctx,
                           COAP_OPTION_BLOCK1,
                           coap_encode_var_safe(buf, sizeof(buf),
                           (block.num << 4) | (block.m << 3) | block.szx), buf);
+
+          coap_add_option(pdu,
+                          COAP_OPTION_SIZE1,
+                          coap_encode_var_safe(buf, sizeof(buf), payload.length),
+                          buf);
 
           coap_add_block(pdu,
                          payload.length,
@@ -608,9 +648,10 @@ usage( const char *program, const char *version) {
      "\t-B seconds\tBreak operation after waiting given seconds\n"
      "\t       \t\t(default is %d)\n"
      "\t-K interval\tsend a ping after interval seconds of inactivity\n"
-     "\t       \t\t(TCP only)\n"
      "\t-N     \t\tSend NON-confirmable message\n"
-     "\t-O num,text\tAdd option num with contents text to request\n"
+     "\t-O num,text\tAdd option num with contents text to request. If the\n"
+     "\t       \t\ttext begins with 0x, then the hex text is converted to\n"
+     "\t       \t\tbinary data\n"
      "\t-P addr[:port]\tUse proxy (automatically adds Proxy-Uri option to\n"
      "\t       \t\trequest)\n"
      "\t-T token\tInclude specified token\n"
@@ -718,7 +759,7 @@ get_default_port(const coap_uri_t *u) {
 static int
 cmdline_uri(char *arg, int create_uri_opts) {
   unsigned char portbuf[2];
-#define BUFSIZE 40
+#define BUFSIZE 100
   unsigned char _buf[BUFSIZE];
   unsigned char *buf = _buf;
   size_t buflen;
@@ -769,6 +810,8 @@ cmdline_uri(char *arg, int create_uri_opts) {
 
     if (uri.path.length) {
       buflen = BUFSIZE;
+      if (uri.path.length > BUFSIZE)
+        coap_log(LOG_WARNING, "URI path will be truncated (max buffer %d)\n", BUFSIZE);
       res = coap_split_path(uri.path.s, uri.path.length, buf, &buflen);
 
       while (res--) {
@@ -891,6 +934,49 @@ cmdline_token(char *arg) {
   }
 }
 
+/**
+ * Utility function to convert a hex digit to its corresponding
+ * numerical value.
+ *
+ * param c  The hex digit to convert. Must be in [0-9A-Fa-f].
+ *
+ * return The numerical representation of @p c.
+ */
+static uint8_t
+hex2char(char c) {
+  assert(isxdigit(c));
+  if ('a' <= c && c <= 'f')
+    return c - 'a' + 10;
+  else if ('A' <= c && c <= 'F')
+    return c - 'A' + 10;
+  else
+    return c - '0';
+}
+
+/**
+ * Converts the sequence of hex digits in src to a sequence of bytes.
+ *
+ * This function returns the number of bytes that have been written to
+ * @p dst.
+ *
+ * param[in]  src  The null-terminated hex string to convert.
+ * param[out] dst  Conversion result.
+ *
+ * return The length of @p dst.
+ */
+static size_t
+convert_hex_string(const char *src, uint8_t *dst) {
+  uint8_t *p = dst;
+  while (isxdigit(src[0]) && isxdigit(src[1])) {
+    *p++ = (hex2char(src[0]) << 4) + hex2char(src[1]);
+    src += 2;
+  }
+  if (src[0] != '\0') { /* error in hex input */
+    coap_log(LOG_WARNING, "invalid hex string in option '%s'\n", src);
+  }
+  return p - dst;
+}
+
 static void
 cmdline_option(char *arg) {
   unsigned int num = 0;
@@ -902,8 +988,19 @@ cmdline_option(char *arg) {
   if (*arg == ',')
     ++arg;
 
-  coap_insert_optlist(&optlist,
-              coap_new_optlist(num, strlen(arg), (unsigned char *)arg));
+   /* read hex string when arg starts with "0x" */
+  if (arg[0] == '0' && arg[1] == 'x') {
+    /* As the command line option is part of our environment we can do
+     * the conversion in place. */
+    size_t len = convert_hex_string(arg + 2, (uint8_t *)arg);
+
+    /* On success, 2 * len + 2 == strlen(arg) */
+    coap_insert_optlist(&optlist,
+                        coap_new_optlist(num, len, (unsigned char *)arg));
+  } else { /* null-terminated character string */
+    coap_insert_optlist(&optlist,
+                        coap_new_optlist(num, strlen(arg), (unsigned char *)arg));
+  }
 }
 
 /**
@@ -1425,6 +1522,7 @@ main(int argc, char **argv) {
   coap_register_option(ctx, COAP_OPTION_BLOCK2);
   coap_register_response_handler(ctx, message_handler);
   coap_register_event_handler(ctx, event_handler);
+  coap_register_nack_handler(ctx, nack_handler);
 
   /* construct CoAP message */
 
@@ -1449,11 +1547,9 @@ main(int argc, char **argv) {
     goto finish;
   }
 
-#ifndef NDEBUG
   coap_log(LOG_DEBUG, "sending CoAP request:\n");
   if (coap_get_log_level() < LOG_DEBUG)
     coap_show_pdu(LOG_INFO, pdu);
-#endif
 
   coap_send(session, pdu);
 
@@ -1469,9 +1565,12 @@ main(int argc, char **argv) {
   sa.sa_flags = 0;
   sigaction (SIGINT, &sa, NULL);
   sigaction (SIGTERM, &sa, NULL);
+  /* So we do not exit on a SIGPIPE */
+  sa.sa_handler = SIG_IGN;
+  sigaction (SIGPIPE, &sa, NULL);
 #endif
 
-  while (!quit && !(ready && coap_can_exit(ctx)) ) {
+  while (!quit && !(ready && !doing_getting_block && coap_can_exit(ctx)) ) {
 
     result = coap_run_once( ctx, wait_ms == 0 ?
                                  obs_ms : obs_ms == 0 ?

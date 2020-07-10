@@ -82,7 +82,7 @@ coap_find_payload(coap_resource_t *resource) {
   return p;
 }
 
-static inline void
+static void
 coap_add_payload(coap_resource_t *resource, coap_payload_t *payload){
   assert(payload);
 
@@ -662,6 +662,9 @@ main(int argc, char **argv) {
   sa.sa_flags = 0;
   sigaction (SIGINT, &sa, NULL);
   sigaction (SIGTERM, &sa, NULL);
+  /* So we do not exit on a SIGPIPE */
+  sa.sa_handler = SIG_IGN;
+  sigaction (SIGPIPE, &sa, NULL);
 
   while ( !quit ) {
     result = coap_run_once( ctx, COAP_RESOURCE_CHECK_TIME * 1000 );

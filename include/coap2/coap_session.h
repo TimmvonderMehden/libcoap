@@ -6,17 +6,20 @@
 * README for terms of use.
 */
 
+/**
+ * @file coap_session.h
+ * @brief Defines the application visible session information
+ */
+
 #ifndef COAP_SESSION_H_
 #define COAP_SESSION_H_
 
 
+#include "coap_forward_decls.h"
 #include "coap_io.h"
 #include "coap_time.h"
 #include "pdu.h"
-
-struct coap_endpoint_t;
-struct coap_context_t;
-struct coap_queue_t;
+#include "uthash.h"
 
 /**
 * Abstraction of a fixed point number that can be used where necessary instead
@@ -48,13 +51,12 @@ typedef uint8_t coap_session_state_t;
  * coap_session_state_t values
  */
 #define COAP_SESSION_STATE_NONE                0
-#define COAP_SESSION_STATE_CONNECTING        1
-#define COAP_SESSION_STATE_HANDSHAKE        2
-#define COAP_SESSION_STATE_CSM                3
-#define COAP_SESSION_STATE_ESTABLISHED        4
+#define COAP_SESSION_STATE_CONNECTING          1
+#define COAP_SESSION_STATE_HANDSHAKE           2
+#define COAP_SESSION_STATE_CSM                 3
+#define COAP_SESSION_STATE_ESTABLISHED         4
 
 typedef struct coap_session_t {
-  struct coap_session_t *next;
   coap_proto_t proto;               /**< protocol used */
   coap_session_type_t type;         /**< client or server side socket */
   coap_session_state_t state;       /**< current state of relationaship with peer */
@@ -62,8 +64,8 @@ typedef struct coap_session_t {
   unsigned tls_overhead;            /**< overhead of TLS layer */
   unsigned mtu;                     /**< path or CSM mtu */
   coap_address_t local_if;          /**< optional local interface address */
-  coap_address_t remote_addr;       /**< remote address and port */
-  coap_address_t local_addr;        /**< local address and port */
+  UT_hash_handle hh;
+  coap_addr_tuple_t addr_info;      /**< key: remote/local address info */
   int ifindex;                      /**< interface index */
   coap_socket_t sock;               /**< socket object for the session, if any */
   struct coap_endpoint_t *endpoint; /**< session's endpoint */
@@ -71,6 +73,7 @@ typedef struct coap_session_t {
   void *tls;                        /**< security parameters */
   uint16_t tx_mid;                  /**< the last message id that was used in this session */
   uint8_t con_active;               /**< Active CON request sent */
+  coap_tid_t last_ping_mid;         /**< the last keepalive message id that was used in this session */
   struct coap_queue_t *delayqueue;  /**< list of delayed messages waiting to be sent */
   size_t partial_write;             /**< if > 0 indicates number of bytes already written from the pdu at the head of sendqueue */
   uint8_t read_header[8];           /**< storage space for header of incoming message header */
@@ -200,8 +203,6 @@ coap_session_t *coap_new_client_session_psk(
   unsigned key_len
 );
 
-struct coap_dtls_pki_t;
-
 /**
 * Creates a new client session to the designated server with PKI credentials
 * @param ctx The CoAP context.
@@ -294,20 +295,6 @@ const char *coap_session_str(const coap_session_t *session);
 ssize_t
 coap_session_delay_pdu(coap_session_t *session, coap_pdu_t *pdu,
                        struct coap_queue_t *node);
-/**
-* Abstraction of virtual endpoint that can be attached to coap_context_t. The
-* tuple (handle, addr) must uniquely identify this endpoint.
-*/
-typedef struct coap_endpoint_t {
-  struct coap_endpoint_t *next;
-  struct coap_context_t *context; /**< endpoint's context */
-  coap_proto_t proto;             /**< protocol used on this interface */
-  uint16_t default_mtu;           /**< default mtu for this interface */
-  coap_socket_t sock;             /**< socket object for the interface, if any */
-  coap_address_t bind_addr;       /**< local interface address */
-  coap_session_t *sessions;       /**< list of active sessions */
-  coap_session_t hello;           /**< special session of DTLS hello messages */
-} coap_endpoint_t;
 
 /**
 * Create a new endpoint for communicating with peers.
@@ -347,24 +334,24 @@ const char *coap_endpoint_str(const coap_endpoint_t *endpoint);
 * @param endpoint Active endpoint the packet was received on.
 * @param packet Received packet.
 * @param now The current time in ticks.
-* @return The CoAP session.
+* @return The CoAP session or @c NULL if error.
 */
 coap_session_t *coap_endpoint_get_session(coap_endpoint_t *endpoint,
   const struct coap_packet_t *packet, coap_tick_t now);
 
 /**
- * Create a new DTLS session for the @p endpoint.
+ * Create a new DTLS session for the @p session.
+ * Note: the @p session is released if no DTLS server session can be created.
  *
  * @ingroup dtls_internal
  *
- * @param endpoint  Endpoint to add DTLS session to
- * @param packet    Received packet information to base session on.
+ * @param session   Session to add DTLS session to
  * @param now       The current time in ticks.
  *
- * @return Created CoAP session or @c NULL if error.
+ * @return CoAP session or @c NULL if error.
  */
-coap_session_t *coap_endpoint_new_dtls_session(coap_endpoint_t *endpoint,
-  const struct coap_packet_t *packet, coap_tick_t now);
+coap_session_t *coap_session_new_dtls_session(coap_session_t *session,
+  coap_tick_t now);
 
 coap_session_t *coap_session_get_by_peer(struct coap_context_t *ctx,
   const struct coap_address_t *remote_addr, int ifindex);
@@ -489,5 +476,21 @@ coap_fixed_point_t coap_session_get_ack_random_factor(coap_session_t *session);
  * @return COAP_INVALID_TID if there is an error
  */
 coap_tid_t coap_session_send_ping(coap_session_t *session);
+
+#define SESSIONS_ADD(e, obj) \
+  HASH_ADD(hh, (e), addr_info, sizeof((obj)->addr_info), (obj))
+
+#define SESSIONS_DELETE(e, obj) \
+  HASH_DELETE(hh, (e), (obj))
+
+#define SESSIONS_ITER(e, el, rtmp)  \
+  HASH_ITER(hh, (e), el, rtmp)
+
+#define SESSIONS_ITER_SAFE(e, el, rtmp) \
+for ((el) = (e); (el) && ((rtmp) = (el)->hh.next, 1); (el) = (rtmp))
+
+#define SESSIONS_FIND(e, k, res) {                     \
+    HASH_FIND(hh, (e), &(k), sizeof(k), (res)); \
+  }
 
 #endif  /* COAP_SESSION_H */

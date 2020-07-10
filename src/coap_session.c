@@ -6,21 +6,18 @@
 * README for terms of use.
 */
 
+#include "coap_internal.h"
+
 #ifndef COAP_SESSION_C_
 #define COAP_SESSION_C_
 
-
-#include "coap_config.h"
-#include "coap_io.h"
-#include "coap_session.h"
-#include "net.h"
-#include "coap_debug.h"
-#include "mem.h"
-#include "resource.h"
-#include "utlist.h"
-#include "encode.h"
 #include <stdio.h>
 
+#ifdef COAP_EPOLL_SUPPORT
+#include <sys/epoll.h>
+#include <sys/timerfd.h>
+#endif /* COAP_EPOLL_SUPPORT */
+#include <errno.h>
 
 void
 coap_session_set_max_retransmit (coap_session_t *session, unsigned int value) {
@@ -112,13 +109,13 @@ coap_make_session(coap_proto_t proto, coap_session_type_t type,
   else
     coap_address_init(&session->local_if);
   if (local_addr)
-    coap_address_copy(&session->local_addr, local_addr);
+    coap_address_copy(&session->addr_info.local, local_addr);
   else
-    coap_address_init(&session->local_addr);
+    coap_address_init(&session->addr_info.local);
   if (remote_addr)
-    coap_address_copy(&session->remote_addr, remote_addr);
+    coap_address_copy(&session->addr_info.remote, remote_addr);
   else
-    coap_address_init(&session->remote_addr);
+    coap_address_init(&session->addr_info.remote);
   session->ifindex = ifindex;
   session->context = context;
   session->endpoint = endpoint;
@@ -137,6 +134,7 @@ coap_make_session(coap_proto_t proto, coap_session_type_t type,
   session->ack_timeout = COAP_DEFAULT_ACK_TIMEOUT;
   session->ack_random_factor = COAP_DEFAULT_ACK_RANDOM_FACTOR;
   session->dtls_event = -1;
+  session->last_ping_mid = COAP_INVALID_TID;
 
   /* initialize message id */
   prng((unsigned char *)&session->tx_mid, sizeof(session->tx_mid));
@@ -173,14 +171,14 @@ void coap_session_free(coap_session_t *session) {
   assert(session->ref == 0);
   if (session->ref)
     return;
+  coap_session_mfree(session);
   if (session->endpoint) {
     if (session->endpoint->sessions)
-      LL_DELETE(session->endpoint->sessions, session);
+      SESSIONS_DELETE(session->endpoint->sessions, session);
   } else if (session->context) {
     if (session->context->sessions)
-      LL_DELETE(session->context->sessions, session);
+      SESSIONS_DELETE(session->context->sessions, session);
   }
-  coap_session_mfree(session);
   coap_log(LOG_DEBUG, "***%s: session closed\n", coap_session_str(session));
 
   coap_free_type(COAP_SESSION, session);
@@ -316,8 +314,14 @@ void coap_session_send_csm(coap_session_t *session) {
 coap_tid_t coap_session_send_ping(coap_session_t *session) {
   coap_pdu_t *ping;
   if (session->state != COAP_SESSION_STATE_ESTABLISHED)
-    return 0;
-  ping = coap_pdu_init(COAP_MESSAGE_CON, COAP_SIGNALING_PING, 0, 1);
+    return COAP_INVALID_TID;
+  if (COAP_PROTO_NOT_RELIABLE(session->proto)) {
+    uint16_t tid = coap_new_message_id (session);
+    ping = coap_pdu_init(COAP_MESSAGE_CON, 0, tid, 0);
+  }
+  else {
+    ping = coap_pdu_init(COAP_MESSAGE_CON, COAP_SIGNALING_PING, 0, 1);
+  }
   if (!ping)
     return COAP_INVALID_TID;
   return coap_send(session, ping);
@@ -398,7 +402,12 @@ void coap_session_disconnected(coap_session_t *session, coap_nack_reason_t reaso
     session->tls = NULL;
   }
 
-  session->state = COAP_SESSION_STATE_NONE;
+  if (session->proto == COAP_PROTO_UDP)
+    session->state = COAP_SESSION_STATE_ESTABLISHED;
+  else
+    session->state = COAP_SESSION_STATE_NONE;
+
+  session->con_active = 0;
 
   if (session->partial_pdu) {
     coap_delete_pdu(session->partial_pdu);
@@ -410,12 +419,13 @@ void coap_session_disconnected(coap_session_t *session, coap_nack_reason_t reaso
     coap_queue_t *q = session->delayqueue;
     session->delayqueue = q->next;
     q->next = NULL;
-    coap_log(LOG_DEBUG, "** %s: tid=%d: not transmitted after delay\n",
+    coap_log(LOG_DEBUG, "** %s: tid=%d: not transmitted after disconnect\n",
              coap_session_str(session), q->id);
     if (q->pdu->type==COAP_MESSAGE_CON
       && COAP_PROTO_NOT_RELIABLE(session->proto)
-      && reason != COAP_NACK_RST)
+      && reason == COAP_NACK_ICMP_ISSUE)
     {
+      /* Make sure that we try a re-transmit later on ICMP error */
       if (coap_wait_ack(session->context, session, q) >= 0)
         q = NULL;
     }
@@ -428,6 +438,9 @@ void coap_session_disconnected(coap_session_t *session, coap_nack_reason_t reaso
     if (q)
       coap_delete_node(q);
   }
+  if (reason != COAP_NACK_ICMP_ISSUE)
+    coap_cancel_session_messages(session->context, session, reason);
+
   if ( COAP_PROTO_RELIABLE(session->proto) ) {
     if (session->sock.flags != COAP_SOCKET_EMPTY) {
       coap_socket_close(&session->sock);
@@ -446,31 +459,40 @@ void coap_session_disconnected(coap_session_t *session, coap_nack_reason_t reaso
 coap_session_t *
 coap_endpoint_get_session(coap_endpoint_t *endpoint,
   const coap_packet_t *packet, coap_tick_t now) {
-  coap_session_t *session = NULL;
+  coap_session_t *session;
+  coap_session_t *rtmp;
   unsigned int num_idle = 0;
   unsigned int num_hs = 0;
   coap_session_t *oldest = NULL;
   coap_session_t *oldest_hs = NULL;
 
-  endpoint->hello.ifindex = -1;
+  SESSIONS_FIND(endpoint->sessions, packet->addr_info, session);
+  if (session) {
+    session->last_rx_tx = now;
+    return session;
+  }
 
-  LL_FOREACH(endpoint->sessions, session) {
-    if (session->ifindex == packet->ifindex &&
-      coap_address_equals(&session->local_addr, &packet->dst) &&
-      coap_address_equals(&session->remote_addr, &packet->src))
-    {
-      session->last_rx_tx = now;
-      return session;
-    }
-    if (session->ref == 0 && session->delayqueue == NULL &&
-        session->type == COAP_SESSION_TYPE_SERVER) {
-      ++num_idle;
-      if (oldest==NULL || session->last_rx_tx < oldest->last_rx_tx)
-        oldest = session;
+  SESSIONS_ITER(endpoint->sessions, session, rtmp) {
+    if (session->ref == 0 && session->delayqueue == NULL) {
+      if (session->type == COAP_SESSION_TYPE_SERVER) {
+        ++num_idle;
+        if (oldest==NULL || session->last_rx_tx < oldest->last_rx_tx)
+          oldest = session;
 
-      if (session->state == COAP_SESSION_STATE_HANDSHAKE) {
+        if (session->state == COAP_SESSION_STATE_HANDSHAKE) {
+          ++num_hs;
+          /* See if this is a partial (D)TLS session set up
+             which needs to be cleared down to prevent DOS */
+          if ((session->last_rx_tx + COAP_PARTIAL_SESSION_TIMEOUT_TICKS) < now) {
+            if (oldest_hs == NULL ||
+                session->last_rx_tx < oldest_hs->last_rx_tx)
+              oldest_hs = session;
+          }
+        }
+      }
+      else if (session->type == COAP_SESSION_TYPE_HELLO) {
         ++num_hs;
-        /* See if this is a partial SSL session set up
+        /* See if this is a partial (D)TLS session set up for Client Hello
            which needs to be cleared down to prevent DOS */
         if ((session->last_rx_tx + COAP_PARTIAL_SESSION_TIMEOUT_TICKS) < now) {
           if (oldest_hs == NULL ||
@@ -494,7 +516,7 @@ coap_endpoint_get_session(coap_endpoint_t *endpoint,
   if (num_hs > (endpoint->context->max_handshake_sessions ?
               endpoint->context->max_handshake_sessions :
               COAP_DEFAULT_MAX_HANDSHAKE_SESSIONS)) {
-    /* Maxed out on number of session in SSL negotiation state */
+    /* Maxed out on number of sessions in (D)TLS negotiation state */
     coap_log(LOG_DEBUG,
              "Oustanding sessions in COAP_SESSION_STATE_HANDSHAKE too "
              "large.  New request ignored\n");
@@ -502,42 +524,79 @@ coap_endpoint_get_session(coap_endpoint_t *endpoint,
   }
 
   if (endpoint->proto == COAP_PROTO_DTLS) {
-    session = &endpoint->hello;
-    coap_address_copy(&session->local_addr, &packet->dst);
-    coap_address_copy(&session->remote_addr, &packet->src);
-    session->ifindex = packet->ifindex;
-  } else {
-    session = coap_make_session(endpoint->proto, COAP_SESSION_TYPE_SERVER,
-      NULL, &packet->dst, &packet->src, packet->ifindex, endpoint->context,
-      endpoint);
-    if (session) {
-      session->last_rx_tx = now;
-      if (endpoint->proto == COAP_PROTO_UDP)
-        session->state = COAP_SESSION_STATE_ESTABLISHED;
-      LL_PREPEND(endpoint->sessions, session);
-      coap_log(LOG_DEBUG, "***%s: new incoming session\n",
-               coap_session_str(session));
+    /*
+     * Need to check that this actually is a Client Hello before wasting
+     * time allocating and then freeing off session.
+     */
+
+    /*
+     * Generic header structure of the DTLS record layer.
+     * typedef struct __attribute__((__packed__)) {
+     *   uint8_t content_type;           content type of the included message
+     *   uint16_t version;               Protocol version
+     *   uint16_t epoch;                 counter for cipher state changes
+     *   uint8_t sequence_number[6];     sequence number
+     *   uint16_t length;                length of the following fragment
+     *   uint8_t handshake;              If content_type == DTLS_CT_HANDSHAKE
+     * } dtls_record_handshake_t;
+     */
+#define OFF_CONTENT_TYPE      0  /* offset of content_type in dtls_record_handshake_t */
+#define DTLS_CT_ALERT        21  /* Content Type Alert */
+#define DTLS_CT_HANDSHAKE    22  /* Content Type Handshake */
+#define OFF_HANDSHAKE_TYPE   13  /* offset of handshake in dtls_record_handshake_t */
+#define DTLS_HT_CLIENT_HELLO  1  /* Client Hello handshake type */
+
+#ifdef WITH_LWIP
+    const uint8_t *payload = (const uint8_t*)packet->pbuf->payload;
+    size_t length = packet->pbuf->len;
+#else /* ! WITH_LWIP */
+    const uint8_t *payload = (const uint8_t*)packet->payload;
+    size_t length = packet->length;
+#endif /* ! WITH_LWIP */
+    if (length < (OFF_HANDSHAKE_TYPE + 1)) {
+      coap_log(LOG_DEBUG,
+         "coap_dtls_hello: ContentType %d Short Packet (%zu < %d) dropped\n",
+         payload[OFF_CONTENT_TYPE], length,
+         OFF_HANDSHAKE_TYPE + 1);
+      return NULL;
+    }
+    if (payload[OFF_CONTENT_TYPE] != DTLS_CT_HANDSHAKE ||
+        payload[OFF_HANDSHAKE_TYPE] != DTLS_HT_CLIENT_HELLO) {
+      /* only log if not a late alert */
+      if (payload[OFF_CONTENT_TYPE] != DTLS_CT_ALERT)
+        coap_log(LOG_DEBUG,
+         "coap_dtls_hello: ContentType %d Handshake %d dropped\n",
+         payload[OFF_CONTENT_TYPE], payload[OFF_HANDSHAKE_TYPE]);
+      return NULL;
     }
   }
-
+  session = coap_make_session(endpoint->proto, COAP_SESSION_TYPE_SERVER,
+                              NULL, &packet->addr_info.local,
+                              &packet->addr_info.remote,
+                              packet->ifindex, endpoint->context, endpoint);
+  if (session) {
+    session->last_rx_tx = now;
+    if (endpoint->proto == COAP_PROTO_UDP)
+      session->state = COAP_SESSION_STATE_ESTABLISHED;
+    else if (endpoint->proto == COAP_PROTO_DTLS) {
+      session->type = COAP_SESSION_TYPE_HELLO;
+    }
+    SESSIONS_ADD(endpoint->sessions, session);
+    coap_log(LOG_DEBUG, "***%s: new incoming session\n",
+             coap_session_str(session));
+  }
   return session;
 }
 
 coap_session_t *
-coap_endpoint_new_dtls_session(coap_endpoint_t *endpoint,
-  const coap_packet_t *packet, coap_tick_t now) {
-  coap_session_t *session = coap_make_session(COAP_PROTO_DTLS,
-    COAP_SESSION_TYPE_SERVER, NULL, &packet->dst, &packet->src,
-    packet->ifindex, endpoint->context, endpoint);
+coap_session_new_dtls_session(coap_session_t *session,
+  coap_tick_t now) {
   if (session) {
     session->last_rx_tx = now;
-    session->state = COAP_SESSION_STATE_HANDSHAKE;
+    session->type = COAP_SESSION_TYPE_SERVER;
     session->tls = coap_dtls_new_server_session(session);
     if (session->tls) {
       session->state = COAP_SESSION_STATE_HANDSHAKE;
-      LL_PREPEND(endpoint->sessions, session);
-      coap_log(LOG_DEBUG, "***%s: new incoming session\n",
-               coap_session_str(session));
     } else {
       coap_session_free(session);
       session = NULL;
@@ -545,6 +604,39 @@ coap_endpoint_new_dtls_session(coap_endpoint_t *endpoint,
   }
   return session;
 }
+
+#ifdef COAP_EPOLL_SUPPORT
+static void
+coap_epoll_ctl_add(coap_socket_t *sock,
+                   uint32_t events,
+                   const char *func
+) {
+  int ret;
+  struct epoll_event event;
+  coap_context_t *context;
+
+  if (sock == NULL)
+    return;
+
+  context = sock->session ? sock->session->context :
+                            sock->endpoint ? sock->endpoint->context : NULL;
+  if (context == NULL)
+    return;
+
+  /* Needed if running 32bit as ptr is only 32bit */
+  memset(&event, 0, sizeof(event));
+  event.events = events;
+  event.data.ptr = sock;
+
+  ret = epoll_ctl(context->epfd, EPOLL_CTL_ADD, sock->fd, &event);
+  if (ret == -1) {
+     coap_log(LOG_ERR,
+              "%s: epoll_ctl ADD failed: %s (%d)\n",
+              func,
+              coap_socket_strerror(), errno);
+  }
+}
+#endif /* COAP_EPOLL_SUPPORT */
 
 static coap_session_t *
 coap_session_create_client(
@@ -568,21 +660,30 @@ coap_session_create_client(
   if (proto == COAP_PROTO_UDP || proto == COAP_PROTO_DTLS) {
     if (!coap_socket_connect_udp(&session->sock, &session->local_if, server,
       proto == COAP_PROTO_DTLS ? COAPS_DEFAULT_PORT : COAP_DEFAULT_PORT,
-      &session->local_addr, &session->remote_addr)) {
+      &session->addr_info.local, &session->addr_info.remote)) {
       goto error;
     }
   } else if (proto == COAP_PROTO_TCP || proto == COAP_PROTO_TLS) {
     if (!coap_socket_connect_tcp1(&session->sock, &session->local_if, server,
       proto == COAP_PROTO_TLS ? COAPS_DEFAULT_PORT : COAP_DEFAULT_PORT,
-      &session->local_addr, &session->remote_addr)) {
+      &session->addr_info.local, &session->addr_info.remote)) {
       goto error;
     }
   }
 
+  session->sock.session = session;
+#ifdef COAP_EPOLL_SUPPORT
+  coap_epoll_ctl_add(&session->sock,
+                     EPOLLIN |
+                      ((session->sock.flags & COAP_SOCKET_WANT_CONNECT) ?
+                       EPOLLOUT : 0),
+                   __func__);
+#endif /* COAP_EPOLL_SUPPORT */
+
   session->sock.flags |= COAP_SOCKET_NOT_EMPTY | COAP_SOCKET_WANT_READ;
   if (local_if)
     session->sock.flags |= COAP_SOCKET_BOUND;
-  LL_PREPEND(ctx->sessions, session);
+  SESSIONS_ADD(ctx->sessions, session);
   return session;
 
 error:
@@ -788,11 +889,18 @@ coap_session_t *coap_new_server_session(
     goto error;
 
   if (!coap_socket_accept_tcp(&ep->sock, &session->sock,
-                              &session->local_addr, &session->remote_addr))
+                              &session->addr_info.local,
+                              &session->addr_info.remote))
     goto error;
   session->sock.flags |= COAP_SOCKET_NOT_EMPTY | COAP_SOCKET_CONNECTED
                        | COAP_SOCKET_WANT_READ;
-  LL_PREPEND(ep->sessions, session);
+  session->sock.session = session;
+#ifdef COAP_EPOLL_SUPPORT
+  coap_epoll_ctl_add(&session->sock,
+                     EPOLLIN,
+                   __func__);
+#endif /* COAP_EPOLL_SUPPORT */
+  SESSIONS_ADD(ep->sessions, session);
   if (session) {
     coap_log(LOG_DEBUG, "***%s: new incoming session\n",
              coap_session_str(session));
@@ -856,7 +964,6 @@ coap_new_endpoint(coap_context_t *context, const coap_address_t *listen_addr, co
     goto error;
   }
 
-#ifndef NDEBUG
   if (LOG_DEBUG <= coap_get_log_level()) {
 #ifndef INET6_ADDRSTRLEN
 #define INET6_ADDRSTRLEN 40
@@ -871,19 +978,17 @@ coap_new_endpoint(coap_context_t *context, const coap_address_t *listen_addr, co
         addr_str);
     }
   }
-#endif /* NDEBUG */
 
   ep->sock.flags |= COAP_SOCKET_NOT_EMPTY | COAP_SOCKET_BOUND;
 
-  if (proto == COAP_PROTO_DTLS) {
-    ep->hello.proto = proto;
-    ep->hello.type = COAP_SESSION_TYPE_HELLO;
-    ep->hello.mtu = ep->default_mtu;
-    ep->hello.context = context;
-    ep->hello.endpoint = ep;
-  }
-
   ep->default_mtu = COAP_DEFAULT_MTU;
+
+  ep->sock.endpoint = ep;
+#ifdef COAP_EPOLL_SUPPORT
+  coap_epoll_ctl_add(&ep->sock,
+                     EPOLLIN,
+                   __func__);
+#endif /* COAP_EPOLL_SUPPORT */
 
   LL_PREPEND(context->endpoint, ep);
   return ep;
@@ -900,20 +1005,21 @@ void coap_endpoint_set_default_mtu(coap_endpoint_t *ep, unsigned mtu) {
 void
 coap_free_endpoint(coap_endpoint_t *ep) {
   if (ep) {
-    coap_session_t *session, *tmp;
+    coap_session_t *session, *rtmp;
 
     if (ep->sock.flags != COAP_SOCKET_EMPTY)
       coap_socket_close(&ep->sock);
 
-    LL_FOREACH_SAFE(ep->sessions, session, tmp) {
+    SESSIONS_ITER_SAFE(ep->sessions, session, rtmp) {
       assert(session->ref == 0);
       if (session->ref == 0) {
-        session->endpoint = NULL;
-        session->context = NULL;
         coap_session_free(session);
       }
     }
 
+    if (ep->context) {
+      LL_DELETE(ep->context->endpoint, ep);
+    }
     coap_mfree_endpoint(ep);
   }
 }
@@ -923,17 +1029,17 @@ coap_session_t *
 coap_session_get_by_peer(coap_context_t *ctx,
   const coap_address_t *remote_addr,
   int ifindex) {
-  coap_session_t *s;
+  coap_session_t *s, *rtmp;
   coap_endpoint_t *ep;
-  LL_FOREACH(ctx->sessions, s) {
-    if (s->ifindex == ifindex && coap_address_equals(&s->remote_addr, remote_addr))
+  SESSIONS_ITER(ctx->sessions, s, rtmp) {
+    if (s->ifindex == ifindex && coap_address_equals(&s->addr_info.remote,
+                                                     remote_addr))
       return s;
   }
   LL_FOREACH(ctx->endpoint, ep) {
-    if (ep->hello.ifindex == ifindex && coap_address_equals(&ep->hello.remote_addr, remote_addr))
-      return &ep->hello;
-    LL_FOREACH(ep->sessions, s) {
-      if (s->ifindex == ifindex && coap_address_equals(&s->remote_addr, remote_addr))
+    SESSIONS_ITER(ep->sessions, s, rtmp) {
+      if (s->ifindex == ifindex && coap_address_equals(&s->addr_info.remote,
+                                                       remote_addr))
         return s;
     }
   }
@@ -943,14 +1049,16 @@ coap_session_get_by_peer(coap_context_t *ctx,
 const char *coap_session_str(const coap_session_t *session) {
   static char szSession[256];
   char *p = szSession, *end = szSession + sizeof(szSession);
-  if (coap_print_addr(&session->local_addr, (unsigned char*)p, end - p) > 0)
+  if (coap_print_addr(&session->addr_info.local,
+                      (unsigned char*)p, end - p) > 0)
     p += strlen(p);
   if (p + 6 < end) {
     strcpy(p, " <-> ");
     p += 5;
   }
   if (p + 1 < end) {
-    if (coap_print_addr(&session->remote_addr, (unsigned char*)p, end - p) > 0)
+    if (coap_print_addr(&session->addr_info.remote,
+                        (unsigned char*)p, end - p) > 0)
       p += strlen(p);
   }
   if (session->ifindex > 0 && p + 1 < end)

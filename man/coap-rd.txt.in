@@ -35,7 +35,7 @@ OPTIONS
 
 *-v* num::
    The verbosity level to use (default: 3, maximum is 9). Above 7, there is
-   increased verbosity in GnuTLS logging.
+   increased verbosity in GnuTLS and OpenSSL logging.
 
 EXAMPLES
 --------
@@ -61,10 +61,10 @@ verbosity level is set to '5'.
 
 * Example
 ----
-coap-rd -A 2001:db8:81a8:0:6ef0:dead:feed:beef  -g FF02:FD
+coap-rd -A 2001:db8:81a8:0:6ef0:dead:feed:beef  -g FF02::FD
 ----
 Set listening address to '2001:db8:81a8:0:6ef0:dead:feed:beef' and join the
-All CoAP Nodes multicast group 'FF02:FD'.
+All CoAP Nodes multicast group 'FF02::FD'.
 
 FILES
 ------

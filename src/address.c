@@ -6,12 +6,9 @@
  * README for terms of use.
  */
 
-#include "coap_config.h"
+#include "coap_internal.h"
 
 #if !defined(WITH_CONTIKI) && !defined(WITH_LWIP)
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#endif
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -24,8 +21,6 @@
 #ifdef HAVE_WS2TCPIP_H
 #include <ws2tcpip.h>
 #endif
-
-#include "address.h"
 
 #ifdef RIOT_VERSION
 /* FIXME */
@@ -70,15 +65,15 @@ int coap_is_mcast(const coap_address_t *a) {
   }
  return 0;
 }
-#else /* !defined(WITH_CONTIKI) && !defined(WITH_LWIP) */
-
-#ifdef __clang__
-/* Make compilers happy that do not like empty modules. As this function is
- * never used, we ignore -Wunused-function at the end of compiling this file
- */
-#pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-static inline void dummy(void) {
-}
 
 #endif /* !defined(WITH_CONTIKI) && !defined(WITH_LWIP) */
+
+void coap_address_init(coap_address_t *addr) {
+  assert(addr);
+  memset(addr, 0, sizeof(coap_address_t));
+#if !defined(WITH_LWIP) && !defined(WITH_CONTIKI)
+  /* lwip and Contiki have constant address sizes and don't need the .size part */
+  addr->size = sizeof(addr->addr);
+#endif
+}
+
