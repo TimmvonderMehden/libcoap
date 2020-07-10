@@ -38,7 +38,7 @@
     <ProjectGuid>{F9255447-0C93-47CB-8644-62F0E6995791}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>coap_server</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
     <ProjectName>coap-server</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -191,7 +191,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -226,7 +226,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -263,7 +263,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -302,7 +302,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

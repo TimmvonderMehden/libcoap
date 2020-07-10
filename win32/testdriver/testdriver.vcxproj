@@ -38,7 +38,7 @@
     <ProjectGuid>{C21580DF-4786-441E-B921-21E66DFA926E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>testdriver</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -184,14 +184,14 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MinimalRebuild>false</MinimalRebuild>
-      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDirDbg);$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDirDbg);C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libcunit$(DbgSuffix)_dll.lib;libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg);$(CUnitLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib;$(CUnitLibDirDbg)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'">
@@ -203,14 +203,14 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MinimalRebuild>false</MinimalRebuild>
-      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDirDbg);$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDirDbg);C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libcunit$(DbgSuffix)_dll.lib;libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg);$(CUnitLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib;$(CUnitLibDirDbg)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -220,14 +220,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDirDbg);$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDirDbg);C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libcunit$(DbgSuffix)_dll.lib;libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg);$(CUnitLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib;$(CUnitLibDirDbg)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug DLL|x64'">
@@ -237,14 +237,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDirDbg);$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDirDbg);C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libcunit$(DbgSuffix)_dll.lib;libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg);$(CUnitLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib;$(CUnitLibDirDbg)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -256,7 +256,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDir);$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDir);C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
@@ -265,7 +265,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libcunit_dll.lib;libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir);$(CUnitLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib;$(CUnitLibDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">
@@ -277,7 +277,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDir);$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDir);C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
@@ -286,7 +286,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libcunit_dll.lib;libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir);$(CUnitLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib;$(CUnitLibDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -298,7 +298,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDir);$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDir);C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -306,7 +306,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libcunit_dll.lib;libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir);$(CUnitLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib;$(CUnitLibDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'">
@@ -318,7 +318,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDir);$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../include/coap;../..;..;$(CUnitIncludeDir);C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -326,7 +326,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libcunit_dll.lib;libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir);$(CUnitLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib;$(CUnitLibDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
