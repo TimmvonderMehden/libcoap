@@ -99,3 +99,4 @@ win32/x64/
 **/Debug/**
 **/Release/**
 win32/libcoap.vcxproj.user
+win32/coap-client/coap-client.vcxproj.user
