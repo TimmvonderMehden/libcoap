@@ -191,7 +191,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -226,7 +226,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -263,7 +263,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -302,7 +302,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

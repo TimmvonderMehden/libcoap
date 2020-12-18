@@ -304,7 +304,7 @@ TYPE %(FullPath) &gt;&gt; "$(IntDir)$(TargetName).def"</Command>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../include/coap2;..;$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include/coap2;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <MinimalRebuild>false</MinimalRebuild>
       <CompileAs>CompileAsC</CompileAs>
@@ -343,7 +343,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../include/coap2;..;$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include/coap2;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -352,7 +352,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>$(IntDir)$(TargetName).def</ModuleDefinitionFile>
       <AdditionalDependencies>libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
@@ -386,7 +386,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../include/coap2;..;$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include/coap2;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <CompileAs>CompileAsC</CompileAs>
       <MinimalRebuild>false</MinimalRebuild>
@@ -408,7 +408,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../include/coap2;..;$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include/coap2;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <CompileAs>CompileAsC</CompileAs>
       <MinimalRebuild>false</MinimalRebuild>
@@ -418,7 +418,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>$(IntDir)$(TargetName).def</ModuleDefinitionFile>
       <AdditionalDependencies>libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
@@ -434,7 +434,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include/coap2;..;$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include/coap2;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -475,7 +475,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include/coap2;..;$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include/coap2;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
@@ -484,7 +484,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>$(IntDir)$(TargetName).def</ModuleDefinitionFile>
       <AdditionalDependencies>libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -520,7 +520,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include/coap2;..;$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include/coap2;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <CompileAs>CompileAsC</CompileAs>
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
@@ -544,7 +544,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include/coap2;..;$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include/coap2;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -556,7 +556,7 @@ copy /Y ..\include\coap2\coap.h.windows ..\include\coap2\coap.h</Command>
       <AdditionalDependencies>libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
