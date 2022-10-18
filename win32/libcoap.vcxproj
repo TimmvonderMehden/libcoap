@@ -337,9 +337,9 @@ TYPE %(FullPath) &gt;&gt; "$(IntDir)$(TargetName).def"</Command>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../include;..;$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../include/coap3;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <MinimalRebuild>false</MinimalRebuild>
       <CompileAs>CompileAsC</CompileAs>
@@ -348,8 +348,8 @@ TYPE %(FullPath) &gt;&gt; "$(IntDir)$(TargetName).def"</Command>
       <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
-      <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
-copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</Command>
+      <Command>rem copy /Y ..\coap_config.h.windows ..\coap_config.h
+if not exist ..\include\coap3\coap.h copy /Y ..\include\coap3\coap.h.windows ..\include\coap3\coap.h</Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Copying config files for windows</Message>
@@ -376,9 +376,9 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../include;..;$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../include/coap3;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -387,12 +387,12 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>$(IntDir)$(TargetName).def</ModuleDefinitionFile>
       <AdditionalDependencies>libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
-      <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
-copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</Command>
+      <Command>rem copy /Y ..\coap_config.h.windows ..\coap_config.h
+if not exist ..\include\coap3\coap.h copy /Y ..\include\coap3\coap.h.windows ..\include\coap3\coap.h</Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Copying config files for windows</Message>
@@ -419,9 +419,9 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../include;..;$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../include/coap3;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <CompileAs>CompileAsC</CompileAs>
       <MinimalRebuild>false</MinimalRebuild>
@@ -431,8 +431,8 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
-      <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
-copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</Command>
+      <Command>rem copy /Y ..\coap_config.h.windows ..\coap_config.h
+if not exist ..\include\coap3\coap.h copy /Y ..\include\coap3\coap.h.windows ..\include\coap3\coap.h</Command>
       <Message>Copying config files for windows</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -441,9 +441,9 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>../include;..;$(OpenSSLIncludeDirDbg)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../include/coap3;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <CompileAs>CompileAsC</CompileAs>
       <MinimalRebuild>false</MinimalRebuild>
@@ -453,11 +453,11 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>$(IntDir)$(TargetName).def</ModuleDefinitionFile>
       <AdditionalDependencies>libcrypto$(DbgSuffix).lib;libssl$(DbgSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDirDbg)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
-      <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
-copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</Command>
+      <Command>rem copy /Y ..\coap_config.h.windows ..\coap_config.h
+if not exist ..\include\coap3\coap.h copy /Y ..\include\coap3\coap.h.windows ..\include\coap3\coap.h</Command>
       <Message>Copying config files for windows</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -468,8 +468,8 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include;..;$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../include;../include/coap3;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -479,8 +479,8 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
-copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</Command>
+      <Command>rem copy /Y ..\coap_config.h.windows ..\coap_config.h
+if not exist ..\include\coap3\coap.h copy /Y ..\include\coap3\coap.h.windows ..\include\coap3\coap.h</Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Copying config files for windows</Message>
@@ -509,8 +509,8 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include;..;$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../include;../include/coap3;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
@@ -519,13 +519,13 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>$(IntDir)$(TargetName).def</ModuleDefinitionFile>
       <AdditionalDependencies>libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
-      <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
-copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</Command>
+      <Command>rem copy /Y ..\coap_config.h.windows ..\coap_config.h
+if not exist ..\include\coap3\coap.h copy /Y ..\include\coap3\coap.h.windows ..\include\coap3\coap.h</Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Copying config files for windows</Message>
@@ -554,8 +554,8 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include;..;$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../include;../include/coap3;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <CompileAs>CompileAsC</CompileAs>
       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
@@ -566,8 +566,8 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
-copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</Command>
+      <Command>rem copy /Y ..\coap_config.h.windows ..\coap_config.h
+if not exist ..\include\coap3\coap.h copy /Y ..\include\coap3\coap.h.windows ..\include\coap3\coap.h</Command>
       <Message>Copying config files for windows</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -578,8 +578,8 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include;..;$(OpenSSLIncludeDir)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../include;../include/coap3;..;C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -591,35 +591,11 @@ copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</C
       <AdditionalDependencies>libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>$(OpenSSLLibDir)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:/dev/{tmp}/pkgsrc/OpenSSL/$(PlatformArchitecture)/lib</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
-      <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
-copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</Command>
-      <Message>Copying config files for windows</Message>
-    </PreBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='NoTLS|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../include;..</AdditionalIncludeDirectories>
-      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
-      <CompileAs>CompileAsC</CompileAs>
-      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-    </Link>
-    <PreBuildEvent>
-      <Command>copy /Y ..\coap_config.h.windows ..\coap_config.h
-copy /Y ..\$(LibCoAPIncludeDir)\coap.h.windows ..\$(LibCoAPIncludeDir)\coap.h</Command>
+      <Command>rem copy /Y ..\coap_config.h.windows ..\coap_config.h
+if not exist ..\include\coap3\coap.h copy /Y ..\include\coap3\coap.h.windows ..\include\coap3\coap.h</Command>
       <Message>Copying config files for windows</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
