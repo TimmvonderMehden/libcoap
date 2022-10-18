@@ -114,3 +114,6 @@ CMakeLists.txt.user
 /out/
 /.vscode/
 /_build/
+include/coap2/openssl/
+win32/.vs/
+win32/
