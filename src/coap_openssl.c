@@ -3381,6 +3381,10 @@ setup_client_ssl_session(coap_session_t *session, SSL *ssl
     SSL_set_psk_server_callback(ssl, coap_dtls_psk_server_callback);
 #endif /* COAP_SERVER_SUPPORT */
     SSL_set_cipher_list(ssl, COAP_OPENSSL_PSK_CIPHERS);
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+    /* PSK-AES128-CCM8 (IKEA Tradfri) needs 64-bit auth tag, blocked at SECLEVEL>=1 */
+    SSL_set_security_level(ssl, 0);
+#endif
     if (setup_data->validate_ih_call_back) {
       if (session->proto == COAP_PROTO_DTLS) {
         SSL_set_max_proto_version(ssl, DTLS1_2_VERSION);
